@@ -1,6 +1,6 @@
 #'@title Resumen de un dataset...
 #'
-#'@description Da el tipo así como otras características de cada columna...
+#'@description Da el tipo así como otras características de cada columna, quitar NA y contar NA
 #'
 #'@param datos Dataset
 #'
