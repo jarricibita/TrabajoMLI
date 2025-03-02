@@ -1,11 +1,11 @@
 library(shiny)
 library(readr)
 
-source('contar_NAs.R')
-source('escalar.R')
-source('filtrar_datos.R')
-source('bivariante.R')
-source('nuevo_dataset_dummy.R')
+source('./contar_NAs.R')
+source('./escalar.R')
+source('./filtrar_datos.R')
+source('./bivariante.R')
+source('./nuevo_dataset_dummy.R')
 
 datos <- read_csv("pacientes_cancer3.csv")
 filtrados <- filtrar_datos(datos)
