@@ -1,8 +1,15 @@
 library(shiny)
 library(readr)
 
+source('contar_NAs.R')
+source('escalar.R')
+source('filtrar_datos.R')
+source('bivariante.R')
+source('nuevo_dataset_dummy.R')
+
 datos <- read_csv("pacientes_cancer3.csv")
 filtrados <- filtrar_datos(datos)
+datos_finales <- nuevo_dataset_dummy(filtrados)
 
 ui <- fluidPage(
   titlePanel("Trabajo final MLI"),
@@ -39,7 +46,9 @@ server <- function(input, output, session) {
     req(input$Modelo)
     if (input$Modelo == 'Distribución de variables') {
       return(contar_NAs(datos))
-    }
+    } else if (input$Modelo == 'Bivariante') {
+      return(bivariante(datos_finales))
+             }
   })
   
   output$grafico <- renderPlot({
