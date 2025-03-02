@@ -48,7 +48,13 @@ server <- function(input, output, session) {
       return(contar_NAs(datos))
     } else if (input$Modelo == 'Bivariante') {
       return(bivariante(datos_finales))
-             }
+    } else if (input$Modelo == 'Multivariante') {
+
+    } else if (input$Modelo == 'CV + predicciones') {
+
+    } else if (input$Modelo == 'Tipos de cáncer') {
+
+    }
   })
   
   output$grafico <- renderPlot({
@@ -62,6 +68,10 @@ server <- function(input, output, session) {
         par(mar = c(10, 10, 4, 7))
         barplot(freqs, main = paste('Diagrama de barras de', input$Variable), names.arg = names(freqs), horiz = TRUE, las=2)
       }
+    } else if (input$Modelo == 'CV + predicciones') {
+
+    } else if (input$Modelo == 'Tipos de cáncer') {
+
     }
   })
 }
