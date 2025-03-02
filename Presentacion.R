@@ -1,19 +1,15 @@
 library(shiny)
 library(readr)
 
+source('contar_NAs.R')
+source('escalar.R')
+source('filtrar_datos.R')
+source('bivariante.R')
+source('nuevo_dataset_dummy.R')
+
 datos <- read_csv("pacientes_cancer3.csv")
 filtrados <- filtrar_datos(datos)
-datos_HER2 <- filtrados |> select(-CRPlevel) |> remove_na()
-
-# Dummies y escalado
-datos_HER2dummy <- nuevo_dataset_dummy(datos_HER2)
-datos_HER2escalado <- nuevo_dataset_normalizado(datos_HER2dummy)
-
-# Bivariante HER2
-datos_HER2 <- datos_HER2escalado
-tabla_pvalores_univar <- table_univar_sig(datos_HER2 |> select(-Remision), datos_HER2$Remision)
-tabla_pvalores_univar[tabla_pvalores_univar['P.Valores']<0.05, ]
-colnames_signif <- tabla_pvalores_univar['Nombres'][tabla_pvalores_univar['P.Valores']<0.05]
+datos_finales <- nuevo_dataset_dummy(filtrados)
 
 ui <- fluidPage(
   titlePanel("Trabajo final MLI"),
@@ -26,11 +22,7 @@ ui <- fluidPage(
       
       conditionalPanel(
         condition = "input.Modelo == 'Distribución de variables'",
-        selectInput("Variable", "Selecciona una variable:", choices = NULL))
-# AQUI NO SÉ CÓMO PONER LO DE LAS PESTAÑAS DE SHINY      
-      conditionalPanel(
-        condition = "input.Modelo == 'Bivariante'",
-        selectInput("Visualización", "Selecciona opción", choices = NULL))
+        selectInput("Variable", "Selecciona una variable:", choices = NULL)
       )
     ),
     
@@ -54,6 +46,14 @@ server <- function(input, output, session) {
     req(input$Modelo)
     if (input$Modelo == 'Distribución de variables') {
       return(contar_NAs(datos))
+    } else if (input$Modelo == 'Bivariante') {
+      return(bivariante(datos_finales))
+    } else if (input$Modelo == 'Multivariante') {
+      
+    } else if (input$Modelo == 'CV + predicciones') {
+      
+    } else if (input$Modelo == 'Tipos de cáncer') {
+      
     }
   })
   
@@ -68,10 +68,12 @@ server <- function(input, output, session) {
         par(mar = c(10, 10, 4, 7))
         barplot(freqs, main = paste('Diagrama de barras de', input$Variable), names.arg = names(freqs), horiz = TRUE, las=2)
       }
+    } else if (input$Modelo == 'CV + predicciones') {
+      
+    } else if (input$Modelo == 'Tipos de cáncer') {
+      
     }
   })
 }
 
-# Ejecutar la aplicación
 shinyApp(ui = ui, server = server)
-
