@@ -83,7 +83,7 @@ predicciones_crossvalpac <- return_crossvalpac[[3]]
 
 #####################################################################################
 
-# SHINY APP
+# SHINY APP ----
 ui <- fluidPage(
   titlePanel("Trabajo final MLI"),
   
