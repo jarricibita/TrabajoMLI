@@ -61,10 +61,11 @@ train_HER2 <- modelo_inicial_HER2[[1]]
 test_HER2 <- modelo_inicial_HER2[[2]]
 accuracy_ini_HER2 <- modelo_inicial_HER2[[3]]
 
+# Cross validation: Lista de precisiones, variables y predicciones
 return_crossvalHER2 <- auto_cross_val(train_HER2, train_HER2['Remision'], num_batch = 4, num_threshold = 0.6)
 precision_crossvalHER2 <- return_crossvalHER2[[1]]
 variables_crossvalHER2 <- return_crossvalHER2[[2]]
-predicciones_crossvalHER2 <- return_crossvalHER2[[3]]
+predicciones_crossvalHER2 <- return_crossvalHER2[[3]] # Precision inicial
 
 
 # Cross validation pac, sin HER2 ----
@@ -73,9 +74,10 @@ datos_pac_modelo$Remision <- datos_pac$Remision
 modelo_inicial_pac <- train_and_test_first(datos_pac_modelo, datos_pac_modelo['Remision'], size_training = 0.8, sig_variable_names = sig_variables_pac, threshold = 0.5)
 train_pac <- modelo_inicial_pac[[1]]
 test_pac <- modelo_inicial_pac[[2]]
-accuracy_ini_pac <- modelo_inicial_pac[[3]]
+accuracy_ini_pac <- modelo_inicial_pac[[3]] # Precision inicial
 
-return_crossvalpac <- auto_cross_val(train_pac, train_pac['Remision'], num_batch = 4, num_threshold = 0.6)
+# Cross validation: Lista de precisiones, variables y predicciones
+return_crossvalpac <- auto_cross_val(train_pac, train_pac['Remision'], num_batch = 4, num_threshold = 0.5)
 precision_crossvalpac <- return_crossvalpac[[1]]
 variables_crossvalpac <- return_crossvalpac[[2]]
 predicciones_crossvalpac <- return_crossvalpac[[3]]
