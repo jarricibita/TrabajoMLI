@@ -7,7 +7,7 @@
 #'@param num_batch
 #'@param num_threshold
 #'@param seed
-#'@return list_accuracy, list_pval
+#'@return list_accuracy, list_pval, list_predictions, list_truth
 #'
 #'@example
 #'
@@ -47,6 +47,7 @@ auto_cross_val <- function(training_dataset_crossval, training_col_crossval_dep,
   list_pval <- list()
   list_accuracy <- list()
   list_predictions <- list()
+  list_truth <- list()
   for(i in 1:num_batch){
     trainingSet_cv <- df_batches_train[[i]]
     testSet_cv <- df_batches_test[[i]]
@@ -76,7 +77,8 @@ auto_cross_val <- function(training_dataset_crossval, training_col_crossval_dep,
     list_accuracy[paste0("accuracy", i)] <- accuracy_cv
     list_pval[paste0("p_val", i)] <- list(sig_variables)
     list_predictions[paste0("Prediction", i)] <- list(model_predict_cv)
+    list_truth[paste0("Prediction", i)] <- list(testSet_cv[[nombre_dep]])
     print("########################################################")
   }
-  return(list(list_accuracy, list_pval, list_predictions))
+  return(list(list_accuracy, list_pval, list_predictions, list_truth))
 }

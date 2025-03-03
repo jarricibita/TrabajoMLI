@@ -3,6 +3,7 @@ library(readr)
 library(caTools)
 # Cosas que he añadido: multivariante con HER2, sin HER2, tabla de tipos de cáncer + frec
 # He cambiado el sourcing de las funciones
+# He añadido un return de Remision reales de cada crossvalidation
 # FALTA: añadir tablas? otros resultados? en la seccion de cross validations, no sé qué poner
 
 # Funciona estando en una carpeta igual a la del repositorio
@@ -65,7 +66,8 @@ accuracy_ini_HER2 <- modelo_inicial_HER2[[3]]
 return_crossvalHER2 <- auto_cross_val(train_HER2, train_HER2['Remision'], num_batch = 4, num_threshold = 0.6)
 precision_crossvalHER2 <- return_crossvalHER2[[1]]
 variables_crossvalHER2 <- return_crossvalHER2[[2]]
-predicciones_crossvalHER2 <- return_crossvalHER2[[3]] # Precision inicial
+predicciones_crossvalHER2 <- return_crossvalHER2[[3]]
+realidad_crossvalHER2 <- return_crossvalHER2[[4]] # Remision REAL
 
 
 # Cross validation pac, sin HER2 ----
@@ -81,6 +83,7 @@ return_crossvalpac <- auto_cross_val(train_pac, train_pac['Remision'], num_batch
 precision_crossvalpac <- return_crossvalpac[[1]]
 variables_crossvalpac <- return_crossvalpac[[2]]
 predicciones_crossvalpac <- return_crossvalpac[[3]]
+realidad_crosscalpac <- return_crossvalpac[[4]] # Remision REAL
 
 
 #####################################################################################
