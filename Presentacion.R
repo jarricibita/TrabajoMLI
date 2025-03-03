@@ -13,6 +13,7 @@ source("./src/fun_resumen_dataset.R")
 source("./src/fun_dummy.R")
 source("./src/fun_normalizacion.R")
 source("./src/fun_univar_pvalue.R")
+source("./src/fun_rerun_multivariant.R")
 
 # Tranformaciones y funciones
 datos <- read_csv("pacientes_cancer3.csv")
@@ -24,16 +25,18 @@ tabla_pvalores_univar <- table_univar_sig(datos_finales |> select(-Remision), da
 tabla_significativos <- tabla_pvalores_univar[tabla_pvalores_univar['P.Valores']<0.05, ]
 colnames_signif <- tabla_pvalores_univar['Nombres'][tabla_pvalores_univar['P.Valores']<0.05]
 
-# Datos con col de HER2 y modelo multivariante
+# Datos con col de HER2 y modelo multivariante ----
 ## Quitar col y NA
 datos_HER2 <- datos_finales |> select(-CRPlevel) |> remove_na()
 ## Modelo logistico
 m.logistico <- glm(datos_HER2$Remision~., data = datos_HER2[colnames_signif], family = "binomial")
 P.valores_multi <- summary(m.logistico)$coefficients[, 4]
+P.valores_multi <- find_sig_variables(datos_HER2 |> select(-Remision), datos_HER2$Remision, umbral = 0.75, P.valores_multi)
+sig_variables_HER2 <- names(P.valores_multi[-1])
 ## Tabla con Nombres y P-valor significativos (con HER2)
-tabla_significativos_multi <- as.data.frame(P.valores_multi) |> reframe(P.valor = P.valores_multi) |> mutate(Nombres = names(P.valores_multi)) |> select(Nombres, P.valor)
+tabla_significativos_multi <- as.data.frame(P.valores_multi[-1]) |> reframe(P.valor = P.valores_multi[-1]) |> mutate(Nombres = names(P.valores_multi[-1])) |> select(Nombres, P.valor)
 
-# Datos SIN col de HER2, con más pacientes y modelo multivariante
+# Datos SIN col de HER2, con más pacientes y modelo multivariante ----
 ## Quitar col y NA
 datos_pac <- datos_finales |> select(-c(CRPlevel, Mut_HER2)) |> remove_na() 
 ## Columnas significativas sin HER2
@@ -41,10 +44,15 @@ colnames_signif_pac <- colnames_signif[!colnames_signif%in%"Mut_HER2"]
 ## Modelo logístico
 m.logistico_pac <- glm(datos_pac$Remision~., data = datos_pac[colnames_signif_pac], family = "binomial")
 P.valores_multi_pac <- summary(m.logistico_pac)$coefficients[, 4]
+P.valores_multi_pac <- find_sig_variables(datos_pac |> select(-Remision), datos_pac$Remision, umbral = 0.75, P.valores_multi_pac)
+sig_variables_pac <- names(P.valores_multi_pac[-1])
 ## Tabla con Nombres y P-valor significativos (sin HER2)
-tabla_significativos_multi_pac <- as.data.frame(P.valores_multi_pac) |> reframe(P.valor = P.valores_multi_pac) |> mutate(Nombres = names(P.valores_multi_pac)) |> select(Nombres, P.valor)
+tabla_significativos_multi_pac <- as.data.frame(P.valores_multi_pac[-1]) |> reframe(P.valor = P.valores_multi_pac[-1]) |> mutate(Nombres = names(P.valores_multi_pac[-1])) |> select(Nombres, P.valor)
+
+# Cross validation con HER2 ----
 
 
+# Cross validation pac, sin HER2 ----
 
 
 #####################################################################################
