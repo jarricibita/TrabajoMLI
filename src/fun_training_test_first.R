@@ -15,8 +15,8 @@
 #'
 #'
 train_and_test_first <- function(dataset, col_dataset_dep, size_training, sig_variable_names, threshold){
-  name_dep <- colnames(col_dataset_dep)
   set.seed(123)
+  name_dep <- colnames(col_dataset_dep)
   size_training <- size_training
   
   # splitting data

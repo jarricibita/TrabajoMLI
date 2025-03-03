@@ -14,8 +14,7 @@
 #'auto_cross_val(num_batch = 4, num_threshold = 0.5, seed = 123)
 #'
 #'
-auto_cross_val <- function(training_dataset_crossval, training_col_crossval_dep, num_batch, num_threshold, seed){
-  set.seed(seed)
+auto_cross_val <- function(training_dataset_crossval, training_col_crossval_dep, num_batch, num_threshold){
   nombre_dep <- colnames(training_col_crossval_dep)
   datos_cross_val <- training_dataset_crossval
   num_batch <- num_batch
@@ -47,6 +46,7 @@ auto_cross_val <- function(training_dataset_crossval, training_col_crossval_dep,
   
   list_pval <- list()
   list_accuracy <- list()
+  list_predictions <- list()
   for(i in 1:num_batch){
     trainingSet_cv <- df_batches_train[[i]]
     testSet_cv <- df_batches_test[[i]]
@@ -56,7 +56,7 @@ auto_cross_val <- function(training_dataset_crossval, training_col_crossval_dep,
     trainingSet_sin_dependiente <- trainingSet_cv[, !names(trainingSet_cv) %in% nombre_dep]
     
     # Bivariante
-    print("Lista de variables bivariantes más significativas: ")
+    print("Lista de variables bivariantes: ")
     p_value_cv <- table_univar_sig(trainingSet_sin_dependiente, trainingSet_cv[[nombre_dep]])
     colnames_signif_cv <- p_value_cv['Nombres'][p_value_cv['P.Valores']<0.05]
     
@@ -75,7 +75,8 @@ auto_cross_val <- function(training_dataset_crossval, training_col_crossval_dep,
     accuracy_cv <- calc_accuracy(model_predict_cv, ifelse(testSet_cv[[nombre_dep]]==1, "Sí", "No"), threshold = num_threshold)
     list_accuracy[paste0("accuracy", i)] <- accuracy_cv
     list_pval[paste0("p_val", i)] <- list(sig_variables)
+    list_predictions[paste0("Prediction", i)] <- list(model_predict_cv)
     print("########################################################")
   }
-  return(list(list_accuracy, list_pval))
+  return(list(list_accuracy, list_pval, list_predictions))
 }
