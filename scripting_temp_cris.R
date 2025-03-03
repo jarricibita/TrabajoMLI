@@ -67,13 +67,15 @@ train_and_test_first <- function(dataset, col_dataset_dep, size_training, sig_va
   
   # model
   glm_model <- glm(trainingSet[[paste0(name_dep)]]~.,
-                      data = trainingSet[sig_variable_names],
-                      family = "binomial")
+                   data = trainingSet[sig_variable_names],
+                   family = "binomial")
   
   # prediction
   glm_model_predict <- predict(glm_model, testSet, type = "response")
   # accuracy
   accuracy <- calc_accuracy(glm_model_predict, ifelse(testSet[[paste0(name_dep)]]==1, "Sí", "No"), threshold = threshold)
+  return(list(trainingSet, testSet, accuracy))
 }
 
-train_and_test_first(datos_pac, datos_pac['Remision'], size_training = 0.8, sig_variable_names = sig_variables_pac, threshold = 0.5)
+
+prueba <- train_and_test_first(datos_pac, datos_pac['Remision'], size_training = 0.8, sig_variable_names = sig_variables_pac, threshold = 0.5)
