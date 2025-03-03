@@ -3,6 +3,7 @@ library(readr)
 library(caTools)
 # Cosas que he añadido: multivariante con HER2, sin HER2, tabla de tipos de cáncer + frec
 # He cambiado el sourcing de las funciones
+# FALTA: añadir tablas? otros resultados? en la seccion de cross validations, no sé qué poner
 
 # Funciona estando en una carpeta igual a la del repositorio
 source('./contar_NAs.R')
