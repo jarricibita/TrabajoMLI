@@ -32,10 +32,13 @@ train_and_test_first <- function(dataset, col_dataset_dep, size_training, sig_va
   glm_model <- glm(trainingSet[[paste0(name_dep)]]~.,
                    data = trainingSet[sig_variable_names],
                    family = "binomial")
+  table <- data.frame('Variables'=sig_variable_names,
+                      'p-valores' = summary(glm_model)$coefficients[-1,4])
   
   # prediction
   glm_model_predict <- predict(glm_model, testSet, type = "response")
+  TrueValues <- testSet$Remision
   # accuracy
   accuracy <- calc_accuracy(glm_model_predict, ifelse(testSet[[paste0(name_dep)]]==1, "Sí", "No"), threshold = threshold)
-  return(list(trainingSet, testSet, accuracy))
+  return(list(trainingSet, testSet, accuracy, glm_model_predict, TrueValues, table))
 }
