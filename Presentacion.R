@@ -129,21 +129,32 @@ server <- function(input, output, session) {
   output$Tabla <- renderTable({
     req(input$Modelo)
     if (input$Modelo == 'Distribución de variables') {
-      return(contar_NAs(datos))
+      tabla <- contar_NAs(datos)
     } else if (input$Modelo == 'Bivariante') {
-      return(tabla_significativos)
+      tabla <- tabla_significativos
     } else if (input$Modelo == 'Multivariante HER2') {
-      return(tabla_significativos_multi[-1, ])
+      tabla <- tabla_significativos_multi[-1, ]
     } else if (input$Modelo == 'Multivariante sin HER2') {
-      return(tabla_significativos_multi_pac[-1, ])
+      tabla <- tabla_significativos_multi_pac[-1, ]
     } else if (input$Modelo == 'CV + predicciones HER2') {
-      
+      tabla <- NULL
     } else if (input$Modelo == 'CV + predicciones sin HER2') {
-      
+      tabla <- NULL
     } else if (input$Modelo == 'Tipos de cáncer') {
-      frec_localizacion <- filtrados |> select(-CRPlevel) |>
+      tabla <- filtrados |> select(-CRPlevel) |>
         group_by(Localizacion_Primaria) |> summarise(Num = n()) |> mutate(Percentage = Num/(sum(Num))*100)
     }
+    # Formateo de tabla para decimales
+    tabla_formatted <- as.data.frame(lapply(tabla, function(x) {
+      if (is.numeric(x)) {
+        format(x, digits = 4)  # Set number of digits for numeric columns
+      } else {
+        x
+      }
+    }))
+    
+    # Return the formatted table
+    return(tabla_formatted)
   })
   
   output$grafico <- renderPlot({
