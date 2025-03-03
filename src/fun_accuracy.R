@@ -14,6 +14,7 @@ calc_accuracy <- function(model_prediction, testSet_and_dep, threshold){
   mat_res <- table(Predicted = clasificacion, Actual = testSet_and_dep)
   mat_res
   accuracy <- (mat_res[1, 1]+mat_res[2, 2])/(sum(mat_res))
-  print(paste0("Precisión del modelo: ", accuracy))
+  accuracy <- round(100*accuracy, 2)
+  print(paste0("Precisión del modelo: ", accuracy, '%'))
   return(accuracy)
 }
