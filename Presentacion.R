@@ -11,14 +11,14 @@ source('./contar_NAs.R')
 source('./escalar.R')
 source('./filtrar_datos.R')
 # source('./bivariante.R')
-source("./src/fun_resumen_dataset.R")
-source("./src/fun_dummy.R")
-source("./src/fun_normalizacion.R")
-source("./src/fun_univar_pvalue.R")
-source("./src/fun_rerun_multivariant.R")
-source("./src/fun_accuracy.R")
-source("./src/fun_training_test_first.R")
-source("./src/fun_crossval.R")
+source("./fun_resumen_dataset.R")
+source("./fun_dummy.R")
+source("./fun_normalizacion.R")
+source("./fun_univar_pvalue.R")
+source("./fun_rerun_multivariant.R")
+source("./fun_accuracy.R")
+source("./fun_training_test_first.R")
+source("./fun_crossval.R")
 
 # Tranformaciones y funciones
 datos <- read_csv("pacientes_cancer3.csv")
@@ -61,6 +61,8 @@ modelo_inicial_HER2 <- train_and_test_first(datos_HER2_modelo, datos_HER2_modelo
 train_HER2 <- modelo_inicial_HER2[[1]]
 test_HER2 <- modelo_inicial_HER2[[2]]
 accuracy_ini_HER2 <- modelo_inicial_HER2[[3]]
+predictions_HER2 <- modelo_inicial_HER2[[4]]
+TrueValues_HER2 <- modelo_inicial_HER2[[5]]
 
 # Cross validation: Lista de precisiones, variables y predicciones
 return_crossvalHER2 <- auto_cross_val(train_HER2, train_HER2['Remision'], num_batch = 4, num_threshold = 0.6)
@@ -68,6 +70,10 @@ precision_crossvalHER2 <- return_crossvalHER2[[1]]
 variables_crossvalHER2 <- return_crossvalHER2[[2]]
 predicciones_crossvalHER2 <- return_crossvalHER2[[3]]
 realidad_crossvalHER2 <- return_crossvalHER2[[4]] # Remision REAL
+tabla_HER2 <- as.data.frame(sort(table(unlist(return_crossvalHER2[[2]])), decreasing=TRUE)) |> 
+  rename('Variable' = Var1,
+         'Splits' = Freq)
+
 
 
 # Cross validation pac, sin HER2 ----
@@ -77,13 +83,18 @@ modelo_inicial_pac <- train_and_test_first(datos_pac_modelo, datos_pac_modelo['R
 train_pac <- modelo_inicial_pac[[1]]
 test_pac <- modelo_inicial_pac[[2]]
 accuracy_ini_pac <- modelo_inicial_pac[[3]] # Precision inicial
+predictions_pac <- modelo_inicial_pac[[4]]
+TrueValues_pac <- modelo_inicial_pac[[5]]
 
 # Cross validation: Lista de precisiones, variables y predicciones
 return_crossvalpac <- auto_cross_val(train_pac, train_pac['Remision'], num_batch = 4, num_threshold = 0.5)
 precision_crossvalpac <- return_crossvalpac[[1]]
 variables_crossvalpac <- return_crossvalpac[[2]]
 predicciones_crossvalpac <- return_crossvalpac[[3]]
-realidad_crosscalpac <- return_crossvalpac[[4]] # Remision REAL
+realidad_crossvalpac <- return_crossvalpac[[4]] # Remision REAL
+tabla_pac <- as.data.frame(sort(table(unlist(return_crossvalpac[[2]])), decreasing=TRUE)) |> 
+  rename('Variable' = Var1,
+         'Splits' = Freq)
 
 
 #####################################################################################
@@ -91,12 +102,13 @@ realidad_crosscalpac <- return_crossvalpac[[4]] # Remision REAL
 # SHINY APP ----
 ui <- fluidPage(
   titlePanel("Trabajo final MLI"),
+  h4('Cristina Li y Javier Arricibita'),
   
   sidebarLayout(
     sidebarPanel(
       h3("Controles Interactivos"),
       selectInput("Modelo", "Elige qué quieres ver:", 
-                  choices = c("Distribución de variables", "Bivariante", "Multivariante HER2", "Multivariante sin HER2", "CV + predicciones HER2", "CV + predicciones sin HER2", "Tipos de cáncer")),
+                  choices = c("Distribución de variables", "Bivariante", "Multivariante", "CV + predicciones HER2", "CV + predicciones sin HER2", "Tipos de cáncer")),
       
       conditionalPanel(
         condition = "input.Modelo == 'Distribución de variables'",
@@ -117,7 +129,7 @@ ui <- fluidPage(
     mainPanel(
       fluidRow(
         column(8, offset = 2,  
-               div(style = "text-align: center;", tableOutput('Tabla')),
+               div(style = "text-align: center;", uiOutput('Tabla')),
                div(style = "text-align: center;", plotOutput("grafico"))
         )
       )
@@ -128,40 +140,108 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   observe({
     updateSelectInput(session, "Variable", choices = names(filtrados))
-    updateSelectInput(session, "NumCrossVal", choices = names(predicciones_crossvalHER2))
-    updateSelectInput(session, "NumCrossVal2", choices = names(predicciones_crossvalpac))
+    updateSelectInput(session, "NumCrossVal", choices = c('General', names(predicciones_crossvalHER2)))
+    updateSelectInput(session, "NumCrossVal2", choices = c('General', names(predicciones_crossvalpac)))
   })
   
-  output$Tabla <- renderTable({
+  output$Tabla <- renderUI({
     req(input$Modelo)
+    
     if (input$Modelo == 'Distribución de variables') {
-      tabla <- contar_NAs(datos)
+      tableOutput("tablaDistribucion")
+      
     } else if (input$Modelo == 'Bivariante') {
-      tabla <- tabla_significativos
-    } else if (input$Modelo == 'Multivariante HER2') {
-      tabla <- tabla_significativos_multi[-1, ]
-    } else if (input$Modelo == 'Multivariante sin HER2') {
-      tabla <- tabla_significativos_multi_pac[-1, ]
-    } else if (input$Modelo == 'CV + predicciones HER2') {
-      tabla <- NULL
-    } else if (input$Modelo == 'CV + predicciones sin HER2') {
-      tabla <- NULL
+      tableOutput("tablaBivariante")
+      
+    } else if (input$Modelo == 'Multivariante') {
+      tagList(
+        h4("Multivariante HER2"),
+        tableOutput("tablaHER2"),
+        h4("Multivariante sin HER2"),
+        tableOutput("tablaSinHER2")
+      )
+      
+    } else if (input$Modelo == 'CV + predicciones HER2'){
+      tableOutput('tablaCVHER2')
+      
+    } else if (input$Modelo == 'CV + predicciones sin HER2'){
+      tableOutput('tablaCVsinHER2')
+    
     } else if (input$Modelo == 'Tipos de cáncer') {
-      tabla <- filtrados |> select(-CRPlevel) |>
-        group_by(Localizacion_Primaria) |> summarise(Num = n()) |> mutate(Percentage = Num/(sum(Num))*100)
+      tableOutput("tablaTiposCancer")
     }
-    # Formateo de tabla para decimales
-    tabla_formatted <- as.data.frame(lapply(tabla, function(x) {
+  })
+  
+  # Función para formatear tablas
+  formatear_tabla <- function(tabla) {
+    as.data.frame(lapply(tabla, function(x) {
       if (is.numeric(x)) {
-        format(x, digits = 4)  # Set number of digits for numeric columns
+        format(x, digits = 4)  # Formato numérico
       } else {
         x
       }
     }))
-    
-    # Return the formatted table
-    return(tabla_formatted)
+  }
+  
+  # Renderizado de las tablas con formato
+  output$tablaDistribucion <- renderTable({
+    formatear_tabla(contar_NAs(datos))
   })
+  
+  output$tablaBivariante <- renderTable({
+    formatear_tabla(tabla_significativos)
+  })
+  
+  output$tablaHER2 <- renderTable({
+    formatear_tabla(tabla_significativos_multi[-1, ])
+  })
+  
+  output$tablaSinHER2 <- renderTable({
+    formatear_tabla(tabla_significativos_multi_pac[-1, ])
+  })
+  
+  output$tablaCVHER2 <- renderTable({
+    req(input$NumCrossVal)  
+    
+    # Según lo que seleccione el usuario en el desplegable, muestra el vector correspondiente
+    if (input$NumCrossVal == 'General'){
+      formatear_tabla(tabla_HER2)
+    } else if(input$NumCrossVal == "Prediction1") {
+      variables_crossvalHER2$p_val1
+    } else if (input$NumCrossVal == "Prediction2") {
+      variables_crossvalHER2$p_val2  
+    } else if (input$NumCrossVal == "Prediction3") {
+      variables_crossvalHER2$p_val3  
+    } else if (input$NumCrossVal == "Prediction4") {
+      variables_crossvalHER2$p_val4  
+    }
+  })
+  
+  
+  output$tablaCVsinHER2 <- renderTable({
+    req(input$NumCrossVal)  
+    
+    # Según lo que seleccione el usuario en el desplegable, muestra el vector correspondiente
+    if (input$NumCrossVal2 == 'General'){
+      formatear_tabla(tabla_pac)
+    } else if(input$NumCrossVal2 == "Prediction1") {
+      variables_crossvalpac$p_val1
+    } else if (input$NumCrossVal2 == "Prediction2") {
+      variables_crossvalpac$p_val2  
+    } else if (input$NumCrossVal2 == "Prediction3") {
+      variables_crossvalpac$p_val3  
+    } else if (input$NumCrossVal2 == "Prediction4") {
+      variables_crossvalpac$p_val4  
+    }
+  })
+  
+  output$tablaTiposCancer <- renderTable({
+    formatear_tabla(
+      filtrados |> select(-CRPlevel) |>
+        group_by(Localizacion_Primaria) |> summarise(Num = n()) |> mutate(Percentage = Num / sum(Num) * 100)
+    )
+  })
+  
   
   output$grafico <- renderPlot({
     req(input$Modelo, input$Variable, input$NumCrossVal, input$NumCrossVal2)
@@ -176,10 +256,25 @@ server <- function(input, output, session) {
       }
     } else if (input$Modelo == 'CV + predicciones HER2') {
       num_crossval <- predicciones_crossvalHER2[[input$NumCrossVal]]
-      hist(num_crossval, main = paste("Frecuencias probabilidad de", input$NumCrossVal), xlim=c(0, 1), xlab="Probabilidad predictiva")
+      #hist(num_crossval, main = paste("Frecuencias probabilidad de", input$NumCrossVal), xlim=c(0, 1), xlab="Probabilidad predictiva")
+      colores <- c("red", "blue") 
+      colores_HER2 <- colores[as.integer(TrueValues_HER2)+1]
+      plot(predictions_HER2, col=colores_HER2, pch=16, main='Probabilidades')
+      legend('topright', 
+             legend = c('Remisión 0', 'Remisión 1'),
+             col = c('red', 'blue'),
+             pch=16,
+             box.lwd = 0)
     } else if (input$Modelo == 'CV + predicciones sin HER2') { 
       num_crossval <- predicciones_crossvalpac[[input$NumCrossVal2]]
-      hist(num_crossval, main = paste("Frecuencias probabilidad de", input$NumCrossVal2), xlim=c(0, 1), xlab="Probabilidad predictiva")
+      colores <- c("red", "blue") 
+      colores_sinHER2 <- colores[as.integer(TrueValues_pac)+1]
+      plot(predictions_pac, col=colores_sinHER2, pch=16, main='Probabilidades')
+      legend('topright', 
+             legend = c('Remisión 0', 'Remisión 1'),
+             col = c('red', 'blue'),
+             pch=16,
+             box.lwd=0)
     } else if (input$Modelo == 'Tipos de cáncer') {
     }
   })
