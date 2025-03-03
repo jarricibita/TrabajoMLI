@@ -14,6 +14,8 @@ source("./src/fun_dummy.R")
 source("./src/fun_normalizacion.R")
 source("./src/fun_univar_pvalue.R")
 source("./src/fun_rerun_multivariant.R")
+source("./src/fun_accuracy.R")
+source("./src/fun_training_test_first.R")
 
 # Tranformaciones y funciones
 datos <- read_csv("pacientes_cancer3.csv")
@@ -50,6 +52,11 @@ sig_variables_pac <- names(P.valores_multi_pac[-1])
 tabla_significativos_multi_pac <- as.data.frame(P.valores_multi_pac[-1]) |> reframe(P.valor = P.valores_multi_pac[-1]) |> mutate(Nombres = names(P.valores_multi_pac[-1])) |> select(Nombres, P.valor)
 
 # Cross validation con HER2 ----
+modelo_inicial_HER2 <- train_and_test_first(datos_HER2, datos_HER2['Remision'], size_training = 0.8, sig_variable_names = sig_variables_HER2, threshold = 0.5)
+train_HER2 <- modelo_inicial_HER2[[1]]
+test_HER2 <- modelo_inicial_HER2[[2]]
+accuracy_ini_HER2 <- modelo_inicial_HER2[[3]]
+
 
 
 # Cross validation pac, sin HER2 ----
