@@ -14,7 +14,7 @@
 #'
 #'
 auto_cross_val <- function(training_dataset_crossval_indep, training_col_crossval_dep, num_batch, num_threshold){
-  nombre_dep <- colnames(col_crossval_dep)
+  nombre_dep <- colnames(training_col_crossval_dep)
   datos_cross_val <- training_dataset_crossval_indep
   datos_cross_val[paste0(nombre_dep)] <- training_col_crossval_dep
   num_batch <- num_batch
