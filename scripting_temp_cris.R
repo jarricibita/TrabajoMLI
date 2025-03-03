@@ -57,7 +57,8 @@ prueba <- train_and_test_first(datos_pac, datos_pac['Remision'], size_training =
 
 
 # prueba cross val ----
-auto_cross_val <- function(training_dataset_crossval, training_col_crossval_dep, num_batch, num_threshold){
+auto_cross_val <- function(training_dataset_crossval, training_col_crossval_dep, num_batch, num_threshold, seed){
+  set.seed(seed)
   nombre_dep <- colnames(training_col_crossval_dep)
   datos_cross_val <- training_dataset_crossval
   num_batch <- num_batch
@@ -95,26 +96,26 @@ auto_cross_val <- function(training_dataset_crossval, training_col_crossval_dep,
     # testSet_cv$Remision <- ifelse(testSet_cv$Remision == 1,"Sí","No")
     
     # preparando df
-    trainingSet_sin_dependiente <- trainingSet_cv[!paste0(nombre_dep)]
+    trainingSet_sin_dependiente <- trainingSet_cv[, !names(trainingSet_cv) %in% nombre_dep]
     
     # Bivariante
     print("Lista de variables bivariantes más significativas: ")
-    p_value_cv <- table_univar_sig(trainingSet_sin_dependiente, trainingSet_cv[paste0(nombre_dep)])
+    p_value_cv <- table_univar_sig(trainingSet_sin_dependiente, trainingSet_cv[[nombre_dep]])
     colnames_signif_cv <- p_value_cv['Nombres'][p_value_cv['P.Valores']<0.05]
     
     # Primer multivariante
-    print("Llevand a cabo modelo multivariante...")
-    cancer_model_temp <- glm(trainingSet_cv[[paste0(nombre_dep)]]~., data = trainingSet_sin_dependiente[colnames_signif_cv], family = "binomial")
+    print("Llevando a cabo modelo multivariante...")
+    cancer_model_temp <- glm(trainingSet_cv[[nombre_dep]]~., data = trainingSet_cv[colnames_signif_cv], family = "binomial")
     P.valores <- summary(cancer_model_temp)$coefficients[, 4]
     P.valores
     
     # Multivariante rerun
-    P.valores <- find_sig_variables(trainingSet_sin_dependiente, trainingSet_cv[paste0(nombre_dep)], umbral = 0.5, P.valores)
+    P.valores <- find_sig_variables(trainingSet_sin_dependiente, trainingSet_cv[[nombre_dep]], umbral = 0.5, P.valores)
     sig_variables <- names(P.valores[-1])
     
-    cancer_model_cv <- glm(trainingSet_cv[[paste0(nombre_dep)]]~., data = trainingSet_sin_dependiente[sig_variables], family = "binomial")
-    cancer_model_predict_cv <- predict(cancer_model_cv, testSet_cv, type = "response")
-    accuracy_cv <- calc_accuracy(cancer_model_predict_cv, ifelse(trainingSet_cv[paste0(nombre_dep)]==1, "Sí", "No"), threshold = num_threshold)
+    model_cv <- glm(trainingSet_cv[[nombre_dep]]~., data = trainingSet_sin_dependiente[sig_variables], family = "binomial")
+    model_predict_cv <- predict(model_cv, testSet_cv, type = "response")
+    accuracy_cv <- calc_accuracy(model_predict_cv, ifelse(testSet_cv[[nombre_dep]]==1, "Sí", "No"), threshold = num_threshold)
     list_accuracy[paste0("accuracy", i)] <- accuracy_cv
     list_pval[paste0("p_val", i)] <- list(sig_variables)
     print("########################################################")
@@ -124,4 +125,4 @@ auto_cross_val <- function(training_dataset_crossval, training_col_crossval_dep,
 
 test <- prueba[[2]]
 train <- prueba[[1]]
-auto_cross_val()
+auto_cross_val(train, train['Remision'], 4, 0.5, seed = 123)
