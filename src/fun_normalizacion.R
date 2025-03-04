@@ -14,9 +14,11 @@
 #'
 
 # Escalar variable, z
-normalizacion_escalado <- function(x){
-  temp <- log(x+1)
-  z <- (temp-mean(temp, na.rm = TRUE))/sd(temp, na.rm = TRUE)
+normalizacion_escalado <- function(x) {
+  temp <- log(x + 1)
+  mean_temp <- mean(temp, na.rm = TRUE)
+  sd_temp <- sd(temp, na.rm = TRUE)
+  z <- (temp - mean_temp) / sd_temp
   return(z)
 }
 
