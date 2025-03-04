@@ -13,6 +13,7 @@ source('./escalar.R')
 source('./filtrar_datos.R')
 # source('./bivariante.R')
 source("./src/fun_resumen_dataset.R")
+source("./src/fun_normalizacion.R")
 source("./src/fun_dummy.R")
 source("./src/fun_normalizacion.R")
 source("./src/fun_univar_pvalue.R")
@@ -24,7 +25,11 @@ source("./src/fun_crossval.R")
 # Tranformaciones y funciones
 datos <- read_csv("pacientes_cancer3.csv")
 filtrados <- filtrar_datos(datos)
-datos_finales <- nuevo_dataset_dummy(filtrados)
+datos_dummy <- nuevo_dataset_dummy(filtrados)
+datos_finales <- datos_dummy |> select(-c(Remision, CRPlevel))
+datos_finales <- nuevo_dataset_normalizado(datos_finales)
+datos_finales$Remision <- datos_dummy$Remision
+datos_finales$CRPlevel <- datos_dummy$CRPlevel
 
 # P-valores bivariante
 tabla_pvalores_univar <- table_univar_sig(datos_finales |> select(-Remision), datos_finales$Remision)
@@ -44,9 +49,9 @@ tabla_significativos_multi <- as.data.frame(P.valores_multi[-1]) |> reframe(P.va
 
 # Datos SIN col de HER2, con más pacientes y modelo multivariante ----
 ## Quitar col y NA
-datos_pac <- datos_finales |> select(-c(CRPlevel, Mut_HER2)) |> remove_na() 
+datos_pac <- datos_finales |> select(-c(CRPlevel, Mut_HER2_scale)) |> remove_na() 
 ## Columnas significativas sin HER2
-colnames_signif_pac <- colnames_signif[!colnames_signif%in%"Mut_HER2"]
+colnames_signif_pac <- colnames_signif[!colnames_signif%in%"Mut_HER2_scale"]
 ## Modelo logístico
 m.logistico_pac <- glm(datos_pac$Remision~., data = datos_pac[colnames_signif_pac], family = "binomial")
 P.valores_multi_pac <- summary(m.logistico_pac)$coefficients[, 4]
@@ -99,13 +104,13 @@ tabla_pac <- as.data.frame(sort(table(unlist(return_crossvalpac[[2]])), decreasi
 
 
 # Modelos por tipo de cáncer
-datos_prostata <- datos_HER2 |> filter(Próstata_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
-datos_colon <- datos_HER2 |> filter(Colon_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
-datos_pulmon <- datos_HER2 |> filter(Pulmón_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
-datos_linfoma <- datos_HER2 |> filter(Linfoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
-datos_leucemia <- datos_HER2 |> filter(Leucemia_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
-datos_mama <- datos_HER2 |> filter(Mama_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
-datos_melanoma <- datos_HER2 |> filter(Melanoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_prostata <- datos_HER2 |> filter(Próstata_Localizacion_Primaria_scale == "1") |> select(-contains("Localizacion_Primaria"))
+datos_colon <- datos_HER2 |> filter(Colon_Localizacion_Primaria_scale == "1") |> select(-contains("Localizacion_Primaria"))
+datos_pulmon <- datos_HER2 |> filter(Pulmón_Localizacion_Primaria_scale == "1") |> select(-contains("Localizacion_Primaria"))
+datos_linfoma <- datos_HER2 |> filter(Linfoma_Localizacion_Primaria_scale == "1") |> select(-contains("Localizacion_Primaria"))
+datos_leucemia <- datos_HER2 |> filter(Leucemia_Localizacion_Primaria_scale == "1") |> select(-contains("Localizacion_Primaria"))
+datos_mama <- datos_HER2 |> filter(Mama_Localizacion_Primaria_scale == "1") |> select(-contains("Localizacion_Primaria"))
+datos_melanoma <- datos_HER2 |> filter(Melanoma_Localizacion_Primaria_scale == "1") |> select(-contains("Localizacion_Primaria"))
 
 lista_datos_localizacion <- list(datos_prostata, datos_colon, datos_pulmon, datos_linfoma, datos_mama, datos_melanoma)
 names(lista_datos_localizacion) <- c("Próstata", "Colon", "Pulmón", "Linfoma", "Mama", "Melanoma")

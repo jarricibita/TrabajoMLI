@@ -12,6 +12,7 @@ source('./escalar.R')
 source('./filtrar_datos.R')
 # source('./bivariante.R')
 source("./src/fun_resumen_dataset.R")
+source("./src/fun_normalizacion.R")
 source("./src/fun_dummy.R")
 source("./src/fun_normalizacion.R")
 source("./src/fun_univar_pvalue.R")
@@ -19,12 +20,15 @@ source("./src/fun_rerun_multivariant.R")
 source("./src/fun_accuracy.R")
 source("./src/fun_training_test_first.R")
 source("./src/fun_crossval.R")
-source("./src/fun_estudio_datasets_multiples.R")
 
 # Tranformaciones y funciones
 datos <- read_csv("pacientes_cancer3.csv")
 filtrados <- filtrar_datos(datos)
-datos_finales <- nuevo_dataset_dummy(filtrados)
+datos_dummy <- nuevo_dataset_dummy(filtrados)
+datos_finales <- datos_dummy |> select(-c(Remision, CRPlevel))
+datos_finales <- nuevo_dataset_normalizado(datos_finales)
+datos_finales$Remision <- datos_dummy$Remision
+datos_finales$CRPlevel <- datos_dummy$CRPlevel
 
 # P-valores bivariante
 tabla_pvalores_univar <- table_univar_sig(datos_finales |> select(-Remision), datos_finales$Remision)
@@ -114,3 +118,19 @@ nombre_dep <- 'Remision'
 return_tipos_1 <- estudio_datasets_multiples(lista_datos_localizacion, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 123)
 return_tipos_2 <- estudio_datasets_multiples(lista_datos_localizacion, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 1818)
 return_tipos_3 <- estudio_datasets_multiples(lista_datos_localizacion, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 8787)
+
+return_tipos_1[1]
+
+medias_precision_tipo <- mapply(function(x, y, z) mean(c(x, y, z)), return_tipos_1[[2]], return_tipos_2[[2]], return_tipos_3[[2]])
+
+
+ifelse(testSet[[paste0(name_dep)]]==1, "Sí", "No")
+
+
+lista_thresholds <- 
+for (i in 1:length(lista_datos_localizacion))
+  Threshold <- 
+  prec1 <- calc_accuracy(return_tipos_1[[3]][[1]], ifelse(return_tipos_1[[4]][[1]]==1, "Sí", "No"), threshold = 0.5)
+  prec2 <- calc_accuracy(return_tipos_2[[3]][[1]], ifelse(return_tipos_2[[4]][[1]]==1, "Sí", "No"), threshold = 0.5)
+  prec3 <- calc_accuracy(return_tipos_3[[3]][[1]], ifelse(return_tipos_3[[4]][[1]]==1, "Sí", "No"), threshold = 0.5)
+  media_temp <- mean(c(prec1, prec2, prec3))

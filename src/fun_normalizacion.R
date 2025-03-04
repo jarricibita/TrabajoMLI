@@ -29,6 +29,12 @@ nuevo_dataset_normalizado <- function(dataset){
         nuevo_dataset[paste0(colnames(dataset[i]), "_scale")] <- normalizacion_escalado(dataset[[i]])
         nuevo_dataset <- nuevo_dataset[, !(colnames(nuevo_dataset) %in% colnames(dataset)[i])]}
     }
+    if(class(dataset[[i]])=="numeric"){
+      p.valor <- shapiro.test(dataset[[i]])$p.value
+      if(p.valor<0.05){
+        nuevo_dataset[paste0(colnames(dataset[i]), "_scale")] <- normalizacion_escalado(dataset[[i]])
+        nuevo_dataset <- nuevo_dataset[, !(colnames(nuevo_dataset) %in% colnames(dataset)[i])]}
+    }
   }
   return(nuevo_dataset)
 }
