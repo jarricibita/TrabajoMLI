@@ -12,10 +12,14 @@
 #'
 #'
 find_sig_variables <- function(dataset_indep, var_dep, umbral, p.values){
-  while(sum(p.values>0.05)>0){
+  while(sum(p.values[-1]>0.05)>0){
     num_colnames <- round(length(p.values[-1])*umbral)
     colnames_sorted <- p.values[-1] |> sort() |> names()
     colnames_keep <- colnames_sorted[1:num_colnames]
+    
+    if(is.null(colnames_keep)) {
+      print("No se han encontrado variables significativas en el modelo multivariante.")
+      break}
     
     m.logistico <- glm(var_dep~., data = dataset_indep[colnames_keep], family = "binomial")
     p.values <- summary(m.logistico)$coefficients[, 4]

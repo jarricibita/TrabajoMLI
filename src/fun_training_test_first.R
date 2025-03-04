@@ -7,15 +7,16 @@
 #'@param size_training
 #'@param sig_variable_names
 #'@param threshold
+#'@param seed
 #'@return trainingSet, testSet, accuracy
 #'
 #'@example
-#'train_and_test_first(size_training = 0.8, threshold = 0.5)
+#'train_and_test_first(size_training = 0.8, threshold = 0.5, seed = 123)
 #'
 #'
 #'
-train_and_test_first <- function(dataset, col_dataset_dep, size_training, sig_variable_names, threshold){
-  set.seed(123)
+train_and_test_first <- function(dataset, col_dataset_dep, size_training, sig_variable_names, threshold, seed = 123){
+  set.seed(seed)
   name_dep <- colnames(col_dataset_dep)
   size_training <- size_training
   

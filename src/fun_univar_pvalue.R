@@ -25,6 +25,7 @@ table_univar_sig <- function(dataset_independent, dependent_variable){
     # print(summary(m.logistico))
     # print("####################################################################")
     if(!is.null(summary(m.logistico)$coefficients[2, ])){
+    # if(nrow(summary(m.logistico)$coefficients)>1){  
       p.valor <- summary(m.logistico)$coefficients[2, 4]
     }else{
       p.valor <- NULL
@@ -33,7 +34,7 @@ table_univar_sig <- function(dataset_independent, dependent_variable){
     P.Valores <- c(P.Valores, p.valor)
   }
   tabla_pvalor <- data.frame(Nombres, P.Valores)
-  print(tabla_pvalor)
+  # print(tabla_pvalor)
   return(tabla_pvalor)
 }
 

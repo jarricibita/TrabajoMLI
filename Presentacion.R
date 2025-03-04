@@ -5,20 +5,21 @@ library(caTools)
 # He cambiado el sourcing de las funciones
 # He añadido un return de Remision reales de cada crossvalidation
 # FALTA: añadir tablas? otros resultados? en la seccion de cross validations, no sé qué poner
+# REMOVE COLUMNS LEFT FOR LOCALIZACION PRIMARIA
 
 # Funciona estando en una carpeta igual a la del repositorio
 source('./contar_NAs.R')
 source('./escalar.R')
 source('./filtrar_datos.R')
 # source('./bivariante.R')
-source("./fun_resumen_dataset.R")
-source("./fun_dummy.R")
-source("./fun_normalizacion.R")
-source("./fun_univar_pvalue.R")
-source("./fun_rerun_multivariant.R")
-source("./fun_accuracy.R")
-source("./fun_training_test_first.R")
-source("./fun_crossval.R")
+source("./src/fun_resumen_dataset.R")
+source("./src/fun_dummy.R")
+source("./src/fun_normalizacion.R")
+source("./src/fun_univar_pvalue.R")
+source("./src/fun_rerun_multivariant.R")
+source("./src/fun_accuracy.R")
+source("./src/fun_training_test_first.R")
+source("./src/fun_crossval.R")
 
 # Tranformaciones y funciones
 datos <- read_csv("pacientes_cancer3.csv")
@@ -65,7 +66,7 @@ predictions_HER2 <- modelo_inicial_HER2[[4]]
 TrueValues_HER2 <- modelo_inicial_HER2[[5]]
 
 # Cross validation: Lista de precisiones, variables y predicciones
-return_crossvalHER2 <- auto_cross_val(train_HER2, train_HER2['Remision'], num_batch = 4, num_threshold = 0.6)
+return_crossvalHER2 <- auto_cross_val(train_HER2, train_HER2['Remision'], num_batch = 4, num_threshold = 0.5)
 precision_crossvalHER2 <- return_crossvalHER2[[1]]
 variables_crossvalHER2 <- return_crossvalHER2[[2]]
 predicciones_crossvalHER2 <- return_crossvalHER2[[3]]
@@ -95,6 +96,20 @@ realidad_crossvalpac <- return_crossvalpac[[4]] # Remision REAL
 tabla_pac <- as.data.frame(sort(table(unlist(return_crossvalpac[[2]])), decreasing=TRUE)) |> 
   rename('Variable' = Var1,
          'Splits' = Freq)
+
+
+# Modelos por tipo de cáncer
+datos_prostata <- datos_HER2 |> filter(Próstata_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_colon <- datos_HER2 |> filter(Colon_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_pulmon <- datos_HER2 |> filter(Pulmón_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_linfoma <- datos_HER2 |> filter(Linfoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_leucemia <- datos_HER2 |> filter(Leucemia_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_mama <- datos_HER2 |> filter(Mama_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_melanoma <- datos_HER2 |> filter(Melanoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+
+lista_datos_localizacion <- list(datos_prostata, datos_colon, datos_pulmon, datos_linfoma, datos_mama, datos_melanoma)
+names(lista_datos_localizacion) <- c("Próstata", "Colon", "Pulmón", "Linfoma", "Mama", "Melanoma")
+lista_precisiones_tipo <- NULL
 
 
 #####################################################################################
@@ -130,6 +145,7 @@ ui <- fluidPage(
       fluidRow(
         column(8, offset = 2,  
                div(style = "text-align: center;", uiOutput('Tabla')),
+               div(style = "text-align: center;", uiOutput("TextoPrecision")),
                div(style = "text-align: center;", plotOutput("grafico"))
         )
       )
@@ -157,8 +173,10 @@ server <- function(input, output, session) {
       tagList(
         h4("Multivariante HER2"),
         tableOutput("tablaHER2"),
+        paste("Precisión:", accuracy_ini_HER2, "%"),
         h4("Multivariante sin HER2"),
-        tableOutput("tablaSinHER2")
+        tableOutput("tablaSinHER2"),
+        paste("Precisión: ", accuracy_ini_pac, "%")
       )
       
     } else if (input$Modelo == 'CV + predicciones HER2'){
@@ -168,7 +186,12 @@ server <- function(input, output, session) {
       tableOutput('tablaCVsinHER2')
     
     } else if (input$Modelo == 'Tipos de cáncer') {
-      tableOutput("tablaTiposCancer")
+      tagList(
+        h4("HER2 mantenida"),
+        tableOutput("tablaTiposCancerHER2"),
+        h4("HER2 sin mantener"),
+        tableOutput("tablaTiposCancer")
+      )
     }
   })
   
@@ -193,11 +216,11 @@ server <- function(input, output, session) {
   })
   
   output$tablaHER2 <- renderTable({
-    formatear_tabla(tabla_significativos_multi[-1, ])
+    formatear_tabla(tabla_significativos_multi)
   })
   
   output$tablaSinHER2 <- renderTable({
-    formatear_tabla(tabla_significativos_multi_pac[-1, ])
+    formatear_tabla(tabla_significativos_multi_pac)
   })
   
   output$tablaCVHER2 <- renderTable({
@@ -219,7 +242,7 @@ server <- function(input, output, session) {
   
   
   output$tablaCVsinHER2 <- renderTable({
-    req(input$NumCrossVal)  
+    req(input$NumCrossVal2)  
     
     # Según lo que seleccione el usuario en el desplegable, muestra el vector correspondiente
     if (input$NumCrossVal2 == 'General'){
@@ -235,6 +258,13 @@ server <- function(input, output, session) {
     }
   })
   
+  output$tablaTiposCancerHER2 <- renderTable({
+    formatear_tabla(
+      filtrados |> select(-CRPlevel) |> 
+        group_by(Localizacion_Primaria) |> drop_na() |> summarise(Num = n()) |> mutate(Percentage = Num / sum(Num) * 100)
+    )
+  })
+  
   output$tablaTiposCancer <- renderTable({
     formatear_tabla(
       filtrados |> select(-CRPlevel) |>
@@ -242,6 +272,47 @@ server <- function(input, output, session) {
     )
   })
   
+  # Precisión en las pestañas de CV
+  output$TextoPrecision <- renderUI({
+    req(input$Modelo)
+    if (input$Modelo == 'CV + predicciones HER2') {
+      textOutput('PrecisionesHER2')
+    } else if (input$Modelo == 'CV + predicciones sin HER2') {
+      textOutput('Precisionespac')
+    } else {
+      NULL
+    }
+  })
+  
+  output$PrecisionesHER2 <- renderText({
+    req(input$NumCrossVal)
+    if (input$NumCrossVal == 'General'){
+      paste("Precisión:", accuracy_ini_HER2, "%")
+    } else if(input$NumCrossVal == "Prediction1") {
+      paste("Precisión:", precision_crossvalHER2$accuracy1, "%")
+    } else if (input$NumCrossVal == "Prediction2") {
+      paste("Precisión:", precision_crossvalHER2$accuracy2, "%")
+    } else if (input$NumCrossVal == "Prediction3") {
+      paste("Precisión:", precision_crossvalHER2$accuracy3, "%")
+    } else if (input$NumCrossVal == "Prediction4") {
+      paste("Precisión:", precision_crossvalHER2$accuracy4, "%")
+    }
+  })
+  
+  output$Precisionespac <- renderText({
+    req(input$NumCrossVal2)
+    if (input$NumCrossVal2 == 'General'){
+      paste("Precisión:", accuracy_ini_pac, "%")
+    } else if(input$NumCrossVal2 == "Prediction1") {
+      paste("Precisión:", precision_crossvalpac$accuracy1, "%")
+    } else if (input$NumCrossVal2 == "Prediction2") {
+      paste("Precisión:", precision_crossvalpac$accuracy2, "%")
+    } else if (input$NumCrossVal2 == "Prediction3") {
+      paste("Precisión:", precision_crossvalpac$accuracy3, "%")
+    } else if (input$NumCrossVal2 == "Prediction4") {
+      paste("Precisión:", precision_crossvalpac$accuracy4, "%")
+    }
+  })
   
   output$grafico <- renderPlot({
     req(input$Modelo, input$Variable, input$NumCrossVal, input$NumCrossVal2)
