@@ -7,7 +7,7 @@
 #'@param accuracy_threshold: threshold for accuracy calculation for each 
 #'@param chosen_seed: seed for training testing split
 #'
-#'@return Lista de listas: precisiones, predicciones (probabilidad), verdaderos; se puede cambiar
+#'@return Lista de listas: variables significativas, precisiones, predicciones (probabilidad), verdaderos; se puede cambiar
 #'
 #'@example
 #'
@@ -15,6 +15,7 @@
 #'
 
 estudio_datasets_multiples <- function(list_of_datasets, name_dep_variable, accuracy_threshold, chosen_seed = 123){
+  lista_variables_tipo <- NULL
   lista_precisiones_tipo <- NULL
   lista_predicciones_tipo <- NULL
   lista_verdaderos_tipo <- NULL
@@ -44,9 +45,10 @@ estudio_datasets_multiples <- function(list_of_datasets, name_dep_variable, accu
     predictions <- modelo_inicial[[4]]
     TrueValues <- modelo_inicial[[5]]
     print("################################################################")
+    lista_variables_tipo[paste0("Variables_Dataset_", nombre_dataset)] <- list(sig_variables_multi)
     lista_precisiones_tipo[paste0("Precisión_Dataset_", nombre_dataset)] <- accuracy_ini
     lista_predicciones_tipo[paste0("Predicciones_Dataset_", nombre_dataset)] <- list(predictions)
     lista_verdaderos_tipo[paste0("Verdaderos_Dataset_", nombre_dataset)] <- list(TrueValues)
   }
-  return(list(lista_precisiones_tipo, lista_predicciones_tipo, lista_verdaderos_tipo))
+  return(list(lista_variables_tipo, lista_precisiones_tipo, lista_predicciones_tipo, lista_verdaderos_tipo))
 }
