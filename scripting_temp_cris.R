@@ -29,6 +29,7 @@ filtrados <- filtrar_datos(datos)
 datos_normalizados <- nuevo_dataset_normalizado(filtrados |> select(-c(CRPlevel, Remision)))
 datos_normalizados$Remision <- filtrados$Remision
 datos_finales <- nuevo_dataset_dummy(datos_normalizados)
+colnames(datos_finales) <- make.names(colnames(datos_finales))
 datos_finales$CRPlevel <- filtrados$CRPlevel
 
 # P-valores bivariante
@@ -120,12 +121,28 @@ return_tipos_1 <- estudio_datasets_multiples(lista_datos_localizacion, nombre_de
 return_tipos_2 <- estudio_datasets_multiples(lista_datos_localizacion, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 1818)
 return_tipos_3 <- estudio_datasets_multiples(lista_datos_localizacion, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 8787)
 
+
+# Modelos por tipo de cáncer
+datos_prostata_sin <- datos_pac |> filter(Próstata_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_colon_sin <- datos_pac |> filter(Colon_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_pulmon_sin <- datos_pac |> filter(Pulmón_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_linfoma_sin <- datos_pac |> filter(Linfoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_leucemia_sin <- datos_pac |> filter(Leucemia_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_mama_sin <- datos_pac |> filter(Mama_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_melanoma_sin <- datos_pac |> filter(Melanoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+
+lista_datos_localizacion_sin <- list(datos_prostata_sin, datos_colon_sin, datos_pulmon_sin, datos_linfoma_sin, datos_mama_sin, datos_melanoma_sin)
+names(lista_datos_localizacion_sin) <- c("Próstata", "Colon", "Pulmón", "Linfoma", "Mama", "Melanoma")
+nombre_dep <- 'Remision'
+
+return_tipos_sin_1 <- estudio_datasets_multiples(lista_datos_localizacion_sin, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 123)
+return_tipos_sin_2 <- estudio_datasets_multiples(lista_datos_localizacion_sin, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 1818)
+return_tipos_sin_3 <- estudio_datasets_multiples(lista_datos_localizacion_sin, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 8787)
+
 return_tipos_1[1]
 
 medias_precision_tipo <- mapply(function(x, y, z) mean(c(x, y, z)), return_tipos_1[[2]], return_tipos_2[[2]], return_tipos_3[[2]])
 
-
-ifelse(testSet[[paste0(name_dep)]]==1, "Sí", "No")
 
 
 lista_thresholds <- c(0.3, 0.4, 0.5, 0.6, 0.7)

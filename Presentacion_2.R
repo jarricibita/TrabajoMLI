@@ -28,6 +28,7 @@ filtrados <- filtrar_datos(datos)
 datos_normalizados <- nuevo_dataset_normalizado(filtrados |> select(-c(CRPlevel, Remision)))
 datos_normalizados$Remision <- filtrados$Remision
 datos_finales <- nuevo_dataset_dummy(datos_normalizados)
+colnames(datos_finales) <- make.names(colnames(datos_finales))
 datos_finales$CRPlevel <- filtrados$CRPlevel
 
 # P-valores bivariante
