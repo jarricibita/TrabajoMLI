@@ -113,8 +113,8 @@ datos_leucemia <- datos_HER2 |> filter(Leucemia_Localizacion_Primaria == "1") |>
 datos_mama <- datos_HER2 |> filter(Mama_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
 datos_melanoma <- datos_HER2 |> filter(Melanoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
 
-lista_datos_localizacion <- list(datos_prostata, datos_colon, datos_pulmon, datos_linfoma, datos_mama, datos_melanoma)
-names(lista_datos_localizacion) <- c("Próstata", "Colon", "Pulmón", "Linfoma", "Mama", "Melanoma")
+lista_datos_localizacion <- list(datos_prostata, datos_colon, datos_pulmon, datos_linfoma, datos_leucemia, datos_mama, datos_melanoma)
+names(lista_datos_localizacion) <- c("Próstata", "Colon", "Pulmón", "Linfoma","Leucemia", "Mama", "Melanoma")
 nombre_dep <- 'Remision'
 
 return_tipos_1 <- estudio_datasets_multiples(lista_datos_localizacion, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 123)
@@ -131,17 +131,16 @@ datos_leucemia_sin <- datos_pac |> filter(Leucemia_Localizacion_Primaria == "1")
 datos_mama_sin <- datos_pac |> filter(Mama_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
 datos_melanoma_sin <- datos_pac |> filter(Melanoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
 
-lista_datos_localizacion_sin <- list(datos_prostata_sin, datos_colon_sin, datos_pulmon_sin, datos_linfoma_sin, datos_mama_sin, datos_melanoma_sin)
-names(lista_datos_localizacion_sin) <- c("Próstata", "Colon", "Pulmón", "Linfoma", "Mama", "Melanoma")
+lista_datos_localizacion_sin <- list(datos_prostata_sin, datos_colon_sin, datos_pulmon_sin, datos_linfoma_sin, datos_leucemia_sin, datos_mama_sin, datos_melanoma_sin)
+names(lista_datos_localizacion_sin) <- c("Próstata", "Colon", "Pulmón", "Linfoma","Leucemia", "Mama", "Melanoma")
 nombre_dep <- 'Remision'
 
 return_tipos_sin_1 <- estudio_datasets_multiples(lista_datos_localizacion_sin, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 123)
 return_tipos_sin_2 <- estudio_datasets_multiples(lista_datos_localizacion_sin, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 1818)
 return_tipos_sin_3 <- estudio_datasets_multiples(lista_datos_localizacion_sin, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 8787)
 
-return_tipos_1[1]
 
-medias_precision_tipo <- mapply(function(x, y, z) mean(c(x, y, z)), return_tipos_1[[2]], return_tipos_2[[2]], return_tipos_3[[2]])
+# medias_precision_tipo <- mapply(function(x, y, z) mean(c(x, y, z)), return_tipos_1[[2]], return_tipos_2[[2]], return_tipos_3[[2]])
 
 
 

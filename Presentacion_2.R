@@ -103,7 +103,7 @@ tabla_pac <- as.data.frame(sort(table(unlist(return_crossvalpac[[2]])), decreasi
          'Splits' = Freq)
 
 
-# Modelos por tipo de cáncer
+# Modelos por tipo de cáncer con HRE2
 datos_prostata <- datos_HER2 |> filter(Próstata_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
 datos_colon <- datos_HER2 |> filter(Colon_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
 datos_pulmon <- datos_HER2 |> filter(Pulmón_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
@@ -112,14 +112,34 @@ datos_leucemia <- datos_HER2 |> filter(Leucemia_Localizacion_Primaria == "1") |>
 datos_mama <- datos_HER2 |> filter(Mama_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
 datos_melanoma <- datos_HER2 |> filter(Melanoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
 
-lista_datos_localizacion <- list(datos_prostata, datos_colon, datos_pulmon, datos_linfoma, datos_mama, datos_melanoma)
-names(lista_datos_localizacion) <- c("Próstata", "Colon", "Pulmón", "Linfoma", "Mama", "Melanoma")
+lista_datos_localizacion <- list(datos_colon, datos_leucemia, datos_linfoma, datos_mama, datos_melanoma, datos_prostata, datos_pulmon)
+names(lista_datos_localizacion) <- c("Colon", "Leucemia", "Linfoma", "Mama","Melanoma", "Próstata", "Pulmón")
 nombre_dep <- 'Remision'
 
 return_tipos_1 <- estudio_datasets_multiples(lista_datos_localizacion, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 123)
 return_tipos_2 <- estudio_datasets_multiples(lista_datos_localizacion, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 1818)
 return_tipos_3 <- estudio_datasets_multiples(lista_datos_localizacion, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 8787)
 
+# SIN HER2
+# Modelos por tipo de cáncer
+datos_prostata_sin <- datos_pac |> filter(Próstata_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_colon_sin <- datos_pac |> filter(Colon_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_pulmon_sin <- datos_pac |> filter(Pulmón_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_linfoma_sin <- datos_pac |> filter(Linfoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_leucemia_sin <- datos_pac |> filter(Leucemia_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_mama_sin <- datos_pac |> filter(Mama_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_melanoma_sin <- datos_pac |> filter(Melanoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+
+lista_datos_localizacion_sin <- list(datos_colon_sin, datos_leucemia_sin, datos_linfoma_sin, datos_mama_sin, datos_melanoma_sin, datos_prostata_sin, datos_pulmon_sin)
+names(lista_datos_localizacion_sin) <- c("Colon", "Leucemia", "Linfoma", "Mama","Melanoma", "Próstata", "Pulmón")
+nombre_dep <- 'Remision'
+
+return_tipos_sin_1 <- estudio_datasets_multiples(lista_datos_localizacion_sin, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 123)
+return_tipos_sin_2 <- estudio_datasets_multiples(lista_datos_localizacion_sin, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 1818)
+return_tipos_sin_3 <- estudio_datasets_multiples(lista_datos_localizacion_sin, nombre_dep, accuracy_threshold = 0.5, chosen_seed = 8787)
+
+
+# Media de precisiones por threshold de datos con HER2
 lista_thresholds <- c(0.3, 0.4, 0.5, 0.6, 0.7)
 tabla_precisiones_tipo <- data.frame(Tipo_Cancer = names(lista_datos_localizacion))
 for (i in 1:length(lista_thresholds)){
@@ -134,6 +154,22 @@ for (i in 1:length(lista_thresholds)){
   tabla_precisiones_tipo[paste0("Threshold_", lista_thresholds[i])] <- lista_medias_temp
 }
 tabla_precisiones_tipo
+
+# Media de precisiones por threshold de datos SIN HER2
+lista_thresholds <- c(0.3, 0.4, 0.5, 0.6, 0.7)
+tabla_precisiones_tipo_sin <- data.frame(Tipo_Cancer = names(lista_datos_localizacion_sin))
+for (i in 1:length(lista_thresholds)){
+  lista_medias_temp <- NULL
+  for (j in 1:length(lista_datos_localizacion_sin)){
+    prec1 <- calc_accuracy(return_tipos_sin_1[[3]][[j]], ifelse(return_tipos_sin_1[[4]][[j]]==1, "Sí", "No"), threshold = lista_thresholds[i])
+    prec2 <- calc_accuracy(return_tipos_sin_2[[3]][[j]], ifelse(return_tipos_sin_2[[4]][[j]]==1, "Sí", "No"), threshold = lista_thresholds[i])
+    prec3 <- calc_accuracy(return_tipos_sin_3[[3]][[j]], ifelse(return_tipos_sin_3[[4]][[j]]==1, "Sí", "No"), threshold = lista_thresholds[i])
+    media_temp <- round(mean(c(prec1, prec2, prec3)), 2)
+    lista_medias_temp <- c(lista_medias_temp, media_temp)
+  }
+  tabla_precisiones_tipo_sin[paste0("Threshold_", lista_thresholds[i])] <- lista_medias_temp
+}
+tabla_precisiones_tipo_sin
 
 #####################################################################################
 
@@ -187,7 +223,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "Variable", choices = names(filtrados))
     updateSelectInput(session, "NumCrossVal", choices = c('General', names(predicciones_crossvalHER2)))
     updateSelectInput(session, "NumCrossVal2", choices = c('General', names(predicciones_crossvalpac)))
-    updateSelectInput(session, "Seleccionar_Cancer", choices = c('Tamaño muestras', 'Precisiones'))
+    updateSelectInput(session, "Seleccionar_Cancer", choices = c('Tamaño muestras', 'Precisiones HER2', 'Precisiones sin HER2'))
   })
   
   output$Tabla <- renderUI({
@@ -224,9 +260,13 @@ server <- function(input, output, session) {
           h4("HER2 sin mantener"),
           tableOutput("tablaTiposCancer")
         )
-      } else if (input$Seleccionar_Cancer == 'Precisiones'){
-        h4("Precisiones por threshold")
-        DT::DTOutput("TablaPrecisionesCancer")
+      } else if (input$Seleccionar_Cancer == 'Precisiones HER2'){
+        h4("Precisiones por threshold datos con HER2")
+        DT::DTOutput("TablaPrecisionesCancerHER2")
+
+      } else if (input$Seleccionar_Cancer == 'Precisiones sin HER2'){
+        h4("Precisiones por threshold datos sin HER2")
+        DT::DTOutput("TablaPrecisionesCancersinHER2")
       }
     }
   })
@@ -297,14 +337,14 @@ server <- function(input, output, session) {
   output$tablaTiposCancerHER2 <- renderTable({
     formatear_tabla(
       filtrados |> select(-CRPlevel) |> 
-        group_by(Localizacion_Primaria) |> drop_na() |> summarise(Num = n()) |> mutate(Percentage = Num / sum(Num) * 100)
+        group_by(Localizacion_Primaria) |> drop_na() |> summarise(Num = n()) |> mutate(Percentage = Num / sum(Num) * 100, Accuracy = tabla_precisiones_tipo[4])
     )
   })
   
   output$tablaTiposCancer <- renderTable({
     formatear_tabla(
       filtrados |> select(-CRPlevel) |>
-        group_by(Localizacion_Primaria) |> summarise(Num = n()) |> mutate(Percentage = Num / sum(Num) * 100)
+        group_by(Localizacion_Primaria) |> summarise(Num = n()) |> mutate(Percentage = Num / sum(Num) * 100, Accuracy = tabla_precisiones_tipo_sin[4])
     )
   })
   
@@ -321,8 +361,12 @@ server <- function(input, output, session) {
         backgroundColor = DT::styleEqual(maxValues, "yellow")
       )
   }
-  output$TablaPrecisionesCancer <- DT::renderDT({
+  output$TablaPrecisionesCancerHER2 <- DT::renderDT({
     highlightMaxAcrossRows(tabla_precisiones_tipo)
+  })
+  
+  output$TablaPrecisionesCancersinHER2 <- DT::renderDT({
+    highlightMaxAcrossRows(tabla_precisiones_tipo_sin)
   })
   
   
