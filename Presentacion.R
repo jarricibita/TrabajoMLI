@@ -12,15 +12,16 @@ source('./contar_NAs.R')
 source('./escalar.R')
 source('./filtrar_datos.R')
 # source('./bivariante.R')
-source("./src/fun_resumen_dataset.R")
-source("./src/fun_normalizacion.R")
-source("./src/fun_dummy.R")
-source("./src/fun_normalizacion.R")
-source("./src/fun_univar_pvalue.R")
-source("./src/fun_rerun_multivariant.R")
-source("./src/fun_accuracy.R")
-source("./src/fun_training_test_first.R")
-source("./src/fun_crossval.R")
+source("./fun_resumen_dataset.R")
+source("./fun_normalizacion.R")
+source("./fun_dummy.R")
+source("./fun_normalizacion.R")
+source("./fun_univar_pvalue.R")
+source("./fun_rerun_multivariant.R")
+source("./fun_accuracy.R")
+source("./fun_training_test_first.R")
+source("./fun_crossval.R")
+source("./estudio_datasets_multiples.R")
 
 # Tranformaciones y funciones
 datos <- read_csv("pacientes_cancer3.csv")
@@ -28,6 +29,8 @@ filtrados <- filtrar_datos(datos)
 datos_normalizados <- nuevo_dataset_normalizado(filtrados |> select(-c(CRPlevel, Remision)))
 datos_normalizados$Remision <- filtrados$Remision
 datos_finales <- nuevo_dataset_dummy(datos_normalizados)
+colnames(datos_finales) <- make.names(colnames(datos_finales))
+
 datos_finales$CRPlevel <- filtrados$CRPlevel
 
 # P-valores bivariante
@@ -103,18 +106,35 @@ tabla_pac <- as.data.frame(sort(table(unlist(return_crossvalpac[[2]])), decreasi
 
 
 # Modelos por tipo de cáncer
-datos_prostata <- datos_HER2 |> filter(Próstata_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
-datos_colon <- datos_HER2 |> filter(Colon_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
-datos_pulmon <- datos_HER2 |> filter(Pulmón_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
-datos_linfoma <- datos_HER2 |> filter(Linfoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
-datos_leucemia <- datos_HER2 |> filter(Leucemia_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
-datos_mama <- datos_HER2 |> filter(Mama_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
-datos_melanoma <- datos_HER2 |> filter(Melanoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_prostata <- datos_finales |> filter(Próstata_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_colon <- datos_finales |> filter(Colon_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_pulmon <- datos_finales |> filter(Pulmón_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_linfoma <- datos_finales |> filter(Linfoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_leucemia <- datos_finales |> filter(Leucemia_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_mama <- datos_finales |> filter(Mama_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_melanoma <- datos_finales |> filter(Melanoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
 
-lista_datos_localizacion <- list(datos_prostata, datos_colon, datos_pulmon, datos_linfoma, datos_mama, datos_melanoma)
-names(lista_datos_localizacion) <- c("Próstata", "Colon", "Pulmón", "Linfoma", "Mama", "Melanoma")
+lista_datos_localizacion <- list(datos_prostata, datos_colon, datos_pulmon, datos_linfoma, datos_leucemia, datos_mama, datos_melanoma)
+names(lista_datos_localizacion) <- c("Próstata", "Colon", "Pulmón", "Linfoma", "Leucemia", "Mama", "Melanoma")
 lista_precisiones_tipo <- NULL
 
+tipos_cancer <- estudio_datasets_multiples(lista_datos_localizacion, 'Remision', 0.5)
+precisiones_tipos <- tipos_cancer[[2]]
+
+datos_prostata_sinHER2 <- datos_HER2 |> filter(Próstata_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_colon_sinHER2 <- datos_HER2 |> filter(Colon_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_pulmon_sinHER2 <- datos_HER2 |> filter(Pulmón_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_linfoma_sinHER2 <- datos_HER2 |> filter(Linfoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_leucemia_sinHER2 <- datos_HER2 |> filter(Leucemia_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_mama_sinHER2 <- datos_HER2 |> filter(Mama_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+datos_melanoma_sinHER2 <- datos_HER2 |> filter(Melanoma_Localizacion_Primaria == "1") |> select(-contains("Localizacion_Primaria"))
+
+lista_datos_localizacion_sinHER2 <- list(datos_prostata_sinHER2, datos_colon_sinHER2, datos_pulmon_sinHER2, datos_linfoma_sinHER2, datos_leucemia_sinHER2, datos_mama_sinHER2, datos_melanoma_sinHER2)
+names(lista_datos_localizacion_sinHER2) <- c("Próstata", "Colon", "Pulmón", "Linfoma", "Leucemia", "Mama", "Melanoma")
+lista_precisiones_tipo_sinHER2 <- NULL
+
+tipos_cancer_sinHER2 <- estudio_datasets_multiples(lista_datos_localizacion_sinHER2, 'Remision', 0.5)
+precisiones_tipos_sinHER2 <- tipos_cancer_sinHER2[[2]]
 
 #####################################################################################
 
@@ -188,7 +208,7 @@ server <- function(input, output, session) {
       
     } else if (input$Modelo == 'CV + predicciones sin HER2'){
       tableOutput('tablaCVsinHER2')
-    
+      
     } else if (input$Modelo == 'Tipos de cáncer') {
       tagList(
         h4("HER2 mantenida"),
@@ -265,16 +285,19 @@ server <- function(input, output, session) {
   output$tablaTiposCancerHER2 <- renderTable({
     formatear_tabla(
       filtrados |> select(-CRPlevel) |> 
-        group_by(Localizacion_Primaria) |> drop_na() |> summarise(Num = n()) |> mutate(Percentage = Num / sum(Num) * 100)
+        group_by(Localizacion_Primaria) |> drop_na() |> summarise(Num = n()) |> mutate(Percentage = Num / sum(Num) * 100,
+                                                                                       Accuracy = precisiones_tipos_sinHER2)
     )
   })
   
   output$tablaTiposCancer <- renderTable({
     formatear_tabla(
       filtrados |> select(-CRPlevel) |>
-        group_by(Localizacion_Primaria) |> summarise(Num = n()) |> mutate(Percentage = Num / sum(Num) * 100)
+        group_by(Localizacion_Primaria) |> summarise(Num = n()) |> mutate(Percentage = Num / sum(Num) * 100,
+                                                                          Accuracy = precisiones_tipos)
     )
   })
+  
   
   # Precisión en las pestañas de CV
   output$TextoPrecision <- renderUI({
