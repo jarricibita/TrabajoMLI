@@ -14,7 +14,7 @@
 #'
 nuevo_dataset_dummy <- function(dataset){
   nuevo_dataset <- dataset
-  for(i in 2:length(dataset)){
+  for(i in 1:length(dataset)){
     if(class(dataset[[i]])=="character"){
       factores <- unique(dataset[[i]])
       num_factores <- unique(dataset[[i]]) |> table() |> sum()
