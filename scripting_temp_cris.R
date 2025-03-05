@@ -1,5 +1,6 @@
 library(readr)
 library(caTools)
+library(plotROC)
 # Cosas que he añadido: multivariante con HER2, sin HER2, tabla de tipos de cáncer + frec
 # He cambiado el sourcing de las funciones
 # He añadido un return de Remision reales de cada crossvalidation
@@ -20,15 +21,15 @@ source("./src/fun_rerun_multivariant.R")
 source("./src/fun_accuracy.R")
 source("./src/fun_training_test_first.R")
 source("./src/fun_crossval.R")
+source("./src/fun_estudio_datasets_multiples.R")
 
 # Tranformaciones y funciones
 datos <- read_csv("pacientes_cancer3.csv")
 filtrados <- filtrar_datos(datos)
-datos_dummy <- nuevo_dataset_dummy(filtrados)
-datos_finales <- datos_dummy |> select(-c(Remision, CRPlevel))
-datos_finales <- nuevo_dataset_normalizado(datos_finales)
-datos_finales$Remision <- datos_dummy$Remision
-datos_finales$CRPlevel <- datos_dummy$CRPlevel
+datos_normalizados <- nuevo_dataset_normalizado(filtrados |> select(-c(CRPlevel, Remision)))
+datos_normalizados$Remision <- filtrados$Remision
+datos_finales <- nuevo_dataset_dummy(datos_normalizados)
+datos_finales$CRPlevel <- filtrados$CRPlevel
 
 # P-valores bivariante
 tabla_pvalores_univar <- table_univar_sig(datos_finales |> select(-Remision), datos_finales$Remision)
@@ -70,7 +71,7 @@ predictions_HER2 <- modelo_inicial_HER2[[4]]
 TrueValues_HER2 <- modelo_inicial_HER2[[5]]
 
 # Cross validation: Lista de precisiones, variables y predicciones
-return_crossvalHER2 <- auto_cross_val(train_HER2, train_HER2['Remision'], num_batch = 4, num_threshold = 0.6)
+return_crossvalHER2 <- auto_cross_val(train_HER2, train_HER2['Remision'], num_batch = 4, num_threshold = 0.5)
 precision_crossvalHER2 <- return_crossvalHER2[[1]]
 variables_crossvalHER2 <- return_crossvalHER2[[2]]
 predicciones_crossvalHER2 <- return_crossvalHER2[[3]]
@@ -127,10 +128,39 @@ medias_precision_tipo <- mapply(function(x, y, z) mean(c(x, y, z)), return_tipos
 ifelse(testSet[[paste0(name_dep)]]==1, "Sí", "No")
 
 
-lista_thresholds <- 
-for (i in 1:length(lista_datos_localizacion))
-  Threshold <- 
-  prec1 <- calc_accuracy(return_tipos_1[[3]][[1]], ifelse(return_tipos_1[[4]][[1]]==1, "Sí", "No"), threshold = 0.5)
-  prec2 <- calc_accuracy(return_tipos_2[[3]][[1]], ifelse(return_tipos_2[[4]][[1]]==1, "Sí", "No"), threshold = 0.5)
-  prec3 <- calc_accuracy(return_tipos_3[[3]][[1]], ifelse(return_tipos_3[[4]][[1]]==1, "Sí", "No"), threshold = 0.5)
-  media_temp <- mean(c(prec1, prec2, prec3))
+lista_thresholds <- c(0.3, 0.4, 0.5, 0.6, 0.7)
+tabla_precisiones_tipo <- data.frame(Tipo_Cancer = names(lista_datos_localizacion))
+for (i in 1:length(lista_thresholds)){
+  lista_medias_temp <- NULL
+  for (j in 1:length(lista_datos_localizacion)){
+    prec1 <- calc_accuracy(return_tipos_1[[3]][[j]], ifelse(return_tipos_1[[4]][[j]]==1, "Sí", "No"), threshold = lista_thresholds[i])
+    prec2 <- calc_accuracy(return_tipos_2[[3]][[j]], ifelse(return_tipos_2[[4]][[j]]==1, "Sí", "No"), threshold = lista_thresholds[i])
+    prec3 <- calc_accuracy(return_tipos_3[[3]][[j]], ifelse(return_tipos_3[[4]][[j]]==1, "Sí", "No"), threshold = lista_thresholds[i])
+    media_temp <- round(mean(c(prec1, prec2, prec3)), 2)
+    lista_medias_temp <- c(lista_medias_temp, media_temp)
+  }
+  tabla_precisiones_tipo[paste0("Threshold_", lista_thresholds[i])] <- lista_medias_temp
+}
+tabla_precisiones_tipo
+
+
+
+roc(return_tipos_2[[4]][[4]], return_tipos_3[[3]][[4]], plot = TRUE, legacy.axes = TRUE,
+    percent = TRUE, xlab = "Porcentaje Falsos positivos",
+    ylab = "Porcentaje verdaderos postivios", col = "#377eb8", lwd = 2,
+    print.auc = TRUE, print.auc.x =45, partial.auc = c(100, 90), # en terminos de especificidad
+    auc.polygon = TRUE, auc.polygon.col = "#377eb850")
+
+library(ggplot2)
+# install.packages("plotROC")
+
+
+
+ggplot(data = data.frame(True=return_tipos_2[[4]][[4]], Pred= return_tipos_3[[3]][[4]]), aes(d = True, m = Pred)) + geom_roc()
+ggplot(data = data.frame(True = TrueValues_pac, Pred = predictions_pac), aes(d = True, m = Pred)) +
+  geom_roc() + labs(x = "1-Especificidad", y = "Sensibilidad") + ggtitle("Modelo sin HER2") + 
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red")
+
+
+
+
